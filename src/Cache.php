@@ -8,9 +8,9 @@
 
 namespace Gckabir\AwesomeCache;
 
-class Cache
+class Cache extends ConfigurableObject
 {
-    private static $config = array(
+    protected static $config = array(
         /**
          * Cache directory path
          */ 
@@ -29,8 +29,8 @@ class Cache
         'serialize'        => true,
     );
 
-    private $key = null;
-    private $file = null;
+    protected $key = null;
+    protected $file = null;
 
     /**
      * Cache Constructor
@@ -49,7 +49,9 @@ class Cache
         $this->file = $directory.$this->key;
 
         if (!file_exists($directory) && !is_dir($directory)) {
-            mkdir($directory);
+
+            // Recursive directory creation
+            mkdir($directory, 0777, true);
         }
     }
 
@@ -153,7 +155,7 @@ class Cache
      * Returns the last modified date of the cached data file
      * @return int
      */
-    public function lastModified()
+    protected function lastModified()
     {
         clearstatcache();
 
@@ -167,45 +169,6 @@ class Cache
     public function isCachedAndUsable()
     {
         return ($this->isCached() && $this->isUsable());
-    }
-
-    /**
-     * Gets/Sets the Caching configurations
-     * 
-     * Getting:
-     * 
-     *      $allConfig = Cache::config();
-     *      $configValue = Cache::config('configName');
-     * 
-     * Setting:
-     * 
-     *      $config = array();
-     *      Cache::config($config);
-     * 
-     * @param array $config (optional)
-     * @return mixed
-     */
-    public static function config($config = null)
-    {
-        if(is_array($config)) {
-            
-            # Setting Configurations
-            static::$config = $config + static::$config;
-            $pathWithoutTrailingSlash = rtrim(static::$config['directory'], '/');
-            static::$config['directory'] = $pathWithoutTrailingSlash.'/';
-
-        } elseif(is_string($config)) {
-
-            # Getting Single Config item
-            return isset(static::$config[$config]) ? static::$config[$config] : null;
-
-        } elseif(!$config) {
-
-            # Getting All configurations
-            return static::$config;
-        } else {
-            throw new CacheException('Invalid parameter provided for Cache::config()');
-        }
     }
 
     /**
