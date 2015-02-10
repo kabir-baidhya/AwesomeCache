@@ -216,13 +216,13 @@ class Cache
     {
         $dir = static::config('directory');
 
-        $dh = opendir($dir);
-        while ($file = readdir($dh)) {
+        $handle = opendir($dir);
+        while ($file = readdir($handle)) {
             if (!is_dir($file)) {
                 @unlink($dir.$file);
             }
         }
-        closedir($dh);
+        closedir($handle);
     }
 
     /**
@@ -234,13 +234,13 @@ class Cache
         $count = 0;
         $dir = static::config('directory');
 
-        $dh = opendir($dir);
-        while ($file = readdir($dh)) {
+        $handle = opendir($dir);
+        while ($file = readdir($handle)) {
             if (!is_dir($file)) {
                 $count++;
             }
         }
-        closedir($dh);
+        closedir($handle);
 
         return $count;
     }
