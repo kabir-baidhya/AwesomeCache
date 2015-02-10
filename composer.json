@@ -7,6 +7,15 @@
             "email": "kabeer182010@gmail.com"
         }
     ],
+    "keywords": [
+        "cache",
+        "awesome",
+        "lightweight",
+        "simple",
+        "php5",
+        "php"
+    ],
+    "license": "MIT",
     "minimum-stability": "dev",
     "require": {
         "php": ">=5.3.0"

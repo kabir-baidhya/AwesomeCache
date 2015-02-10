@@ -166,7 +166,7 @@ class Cache
      */
     public function isCachedAndUsable()
     {
-        return ($this->isCached() and $this->isUsable());
+        return ($this->isCached() && $this->isUsable());
     }
 
     /**
