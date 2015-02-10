@@ -31,7 +31,7 @@ abstract class ConfigurableObject
 	public static function config($config = null)
 	{
 		if(is_array($config)) {
-			
+
             # Setting Configurations
 			static::$config = $config + static::$config;
 			$pathWithoutTrailingSlash = rtrim(static::$config['directory'], '/');
