@@ -66,7 +66,7 @@ class Cache extends ConfigurableObject
 
     /**
      * Returns the cache filepath of this data
-     * @return type
+     * @return string
      */
     public function filePath() 
     {
@@ -99,16 +99,16 @@ class Cache extends ConfigurableObject
      */
     public function putInCache($data)
     {
-        $success = false;
-
         if (!$data) {
             throw new CacheException("No data provided for storing in the cache");
+            return false;
         }
 
         $serializationEnabled = static::config('serialize');
 
         if(!$serializationEnabled && !is_scalar($data)) {
             throw new CacheException("Trying to store non-scalar data with serialization disabled");
+            return false;
         }
 
         $data = $serializationEnabled ? serialize($data) : $data;
@@ -116,17 +116,17 @@ class Cache extends ConfigurableObject
 
         if($this->isCached() && !is_writable($this->filePath())) {
             throw new CacheException(sprintf("File '%s' is not writable", $this->filePath()));
+            return false;
         }
 
         $success = file_put_contents($this->filePath(), $data);
 
         if ($success === false) {
             throw new CacheException("Couldn't write to file: {$this->file}");
-        } else {
-            $success = true;
-        }
+            return false;
+        } 
 
-        return $success;
+        return true;
     }
 
     /**
@@ -188,8 +188,7 @@ class Cache extends ConfigurableObject
      */
     public static function clearAll()
     {
-        $directoryPath = static::config('directory');
-        $dir = new \DirectoryIterator($directoryPath);
+        $dir = new \DirectoryIterator(static::config('directory'));
 
         foreach ($dir as $fileinfo) {
 
@@ -208,8 +207,7 @@ class Cache extends ConfigurableObject
     {
         $count = 0;
 
-        $directoryPath = static::config('directory');
-        $dir = new \DirectoryIterator($directoryPath);
+        $dir = new \DirectoryIterator(static::config('directory'));
 
         foreach ($dir as $fileinfo) {
             if ($fileinfo->isFile()) {
@@ -230,7 +228,7 @@ class Cache extends ConfigurableObject
 
     /**
      * Clear/Delete a specified data by its key
-     * @param type $key 
+     * @param string $key 
      * @return void
      */
     public static function clear($key)

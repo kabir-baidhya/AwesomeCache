@@ -25,7 +25,7 @@ abstract class ConfigurableObject
      *      $config = array();
      *      Cache::config($config);
      * 
-     * @param array $config (optional)
+     * @param mixed $config (optional)
      * @return mixed
      */
 	public static function config($config = null)
