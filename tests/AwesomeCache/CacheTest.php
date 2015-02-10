@@ -6,9 +6,9 @@ class CacheTest extends TestCase
 {
     public function __construct()
     {
-        $config = [
+        $config = array(
             'directory'    => __DIR__.'/../TestData/cache',
-        ];
+        );
         Cache::config($config);
     }
 
@@ -78,10 +78,10 @@ class CacheTest extends TestCase
         //storing
         $myCache = new Cache($key);
 
-        $dataToBeCached = [
+        $dataToBeCached = array(
             'foo'    => 'Bar',
             'hello'    => 'World',
-        ];
+        );
 
         $myCache->putInCache($dataToBeCached);
 
@@ -151,10 +151,10 @@ class CacheTest extends TestCase
 
     public function testConfigurations() {
 
-        $ourConfig  = [
+        $ourConfig  = array(
             'cacheExpiry'   => 44556,
             'directory'     => 'foo-cache/'
-        ];
+        );
 
         // Setting configurations
         Cache::config($ourConfig);

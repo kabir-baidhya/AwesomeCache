@@ -103,7 +103,7 @@ class Cache extends ConfigurableObject
             throw new CacheException("No data provided for storing in the cache");
         }
 
-        $serializationEnabled = static::$config['serialize'];
+        $serializationEnabled = static::config('serialize');
 
         if(!$serializationEnabled && !is_scalar($data)) {
             throw new CacheException("Serialization should be set to 'true' for storing non-scalar data");
@@ -133,7 +133,7 @@ class Cache extends ConfigurableObject
      */
     public function isUsable()
     {
-        return ($this->duration() < static::$config['cacheExpiry']);
+        return ($this->duration() < static::config('cacheExpiry'));
     }
 
     /**
