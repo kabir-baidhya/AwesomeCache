@@ -99,6 +99,8 @@ class Cache extends ConfigurableObject
      */
     public function putInCache($data)
     {
+        $success = false;
+
         if (!$data) {
             throw new CacheException("No data provided for storing in the cache");
         }
@@ -106,16 +108,25 @@ class Cache extends ConfigurableObject
         $serializationEnabled = static::config('serialize');
 
         if(!$serializationEnabled && !is_scalar($data)) {
-            throw new CacheException("Serialization should be set to 'true' for storing non-scalar data");
+            throw new CacheException("Trying to store non-scalar data with serialization disabled");
         }
 
         $data = $serializationEnabled ? serialize($data) : $data;
 
-        $written = @file_put_contents($this->file, $data);
 
-        if (!$written) {
-            throw new CacheException("Couldn't write to file: {$this->file}");
+        if($this->isCached() && !is_writable($this->filePath())) {
+            throw new CacheException(sprintf("File '%s' is not writable", $this->filePath()));
         }
+
+        $success = file_put_contents($this->filePath(), $data);
+
+        if ($success === false) {
+            throw new CacheException("Couldn't write to file: {$this->file}");
+        } else {
+            $success = true;
+        }
+
+        return $success;
     }
 
     /**
@@ -177,15 +188,16 @@ class Cache extends ConfigurableObject
      */
     public static function clearAll()
     {
-        $dir = static::config('directory');
+        $directoryPath = static::config('directory');
+        $dir = new \DirectoryIterator($directoryPath);
 
-        $handle = opendir($dir);
-        while ($file = readdir($handle)) {
-            if (!is_dir($file)) {
-                @unlink($dir.$file);
+        foreach ($dir as $fileinfo) {
+
+            if ($fileinfo->isFile()) {
+                $cacheKey = $fileinfo->getFilename();
+                static::clear($cacheKey);
             }
         }
-        closedir($handle);
     }
 
     /**
@@ -195,15 +207,15 @@ class Cache extends ConfigurableObject
     public static function countAll()
     {
         $count = 0;
-        $dir = static::config('directory');
 
-        $handle = opendir($dir);
-        while ($file = readdir($handle)) {
-            if (!is_dir($file)) {
+        $directoryPath = static::config('directory');
+        $dir = new \DirectoryIterator($directoryPath);
+
+        foreach ($dir as $fileinfo) {
+            if ($fileinfo->isFile()) {
                 $count++;
             }
         }
-        closedir($handle);
 
         return $count;
     }
@@ -213,7 +225,7 @@ class Cache extends ConfigurableObject
      * @return void
      */
     public function purge() {
-        static::clear($this->key);
+        static::clear($this->key()) ;
     }
 
     /**
@@ -226,7 +238,12 @@ class Cache extends ConfigurableObject
         $that = new static($key);
 
         if ($that->isCached()) {
-            @unlink($that->file);
+
+            $deletionSuccess = unlink($that->filePath());
+            
+            if(!$deletionSuccess) {
+                throw new CacheException(sprintf("Could not delete file '%s'", $this->filePath()));
+            }
         }
     }
 }
