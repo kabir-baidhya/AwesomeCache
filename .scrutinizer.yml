@@ -6,8 +6,5 @@ filter:
 build:
     environment:
         php:
-            version: 
-                - 5.6.0
-                - 5.5.14
-                - 5.4.30
-                - hhvm        # Common versions: 5.4.28, 5.5.12, or hhvm
+            version: 5.4.28
+                
