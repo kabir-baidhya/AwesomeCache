@@ -2,3 +2,4 @@ composer.phar
 composer.lock
 tests/Coverage/
 vendor/
+phpdoc-md
