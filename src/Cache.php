@@ -8,9 +8,9 @@
 
 namespace Gckabir\AwesomeCache;
 
-class Cache
+class Cache extends ConfigurableObject
 {
-    private static $config = array(
+    protected static $config = array(
         /**
          * Cache directory path
          */ 
@@ -29,8 +29,8 @@ class Cache
         'serialize'        => true,
     );
 
-    private $key = null;
-    private $file = null;
+    protected $key = null;
+    protected $file = null;
 
     /**
      * Cache Constructor
@@ -49,7 +49,9 @@ class Cache
         $this->file = $directory.$this->key;
 
         if (!file_exists($directory) && !is_dir($directory)) {
-            mkdir($directory);
+
+            // Recursive directory creation
+            mkdir($directory, 0777, true);
         }
     }
 
@@ -64,7 +66,7 @@ class Cache
 
     /**
      * Returns the cache filepath of this data
-     * @return type
+     * @return string
      */
     public function filePath() 
     {
@@ -101,19 +103,26 @@ class Cache
             throw new CacheException("No data provided for storing in the cache");
         }
 
-        $serializationEnabled = static::$config['serialize'];
+        $serializationEnabled = static::config('serialize');
 
         if(!$serializationEnabled && !is_scalar($data)) {
-            throw new CacheException("Serialization should be set to 'true' for storing non-scalar data");
+            throw new CacheException("Trying to store non-scalar data with serialization disabled");
         }
 
         $data = $serializationEnabled ? serialize($data) : $data;
 
-        $written = @file_put_contents($this->file, $data);
 
-        if (!$written) {
-            throw new CacheException("Couldn't write to file: {$this->file}");
+        if($this->isCached() && !is_writable($this->filePath())) {
+            throw new CacheException(sprintf("File '%s' is not writable", $this->filePath()));
         }
+
+        $success = file_put_contents($this->filePath(), $data);
+
+        if ($success === false) {
+            throw new CacheException("Couldn't write to file: {$this->file}");
+        } 
+
+        return true;
     }
 
     /**
@@ -131,7 +140,7 @@ class Cache
      */
     public function isUsable()
     {
-        return ($this->duration() < static::$config['cacheExpiry']);
+        return ($this->duration() < static::config('cacheExpiry'));
     }
 
     /**
@@ -153,7 +162,7 @@ class Cache
      * Returns the last modified date of the cached data file
      * @return int
      */
-    public function lastModified()
+    protected function lastModified()
     {
         clearstatcache();
 
@@ -170,59 +179,20 @@ class Cache
     }
 
     /**
-     * Gets/Sets the Caching configurations
-     * 
-     * Getting:
-     * 
-     *      $allConfig = Cache::config();
-     *      $configValue = Cache::config('configName');
-     * 
-     * Setting:
-     * 
-     *      $config = array();
-     *      Cache::config($config);
-     * 
-     * @param array $config (optional)
-     * @return mixed
-     */
-    public static function config($config = null)
-    {
-        if(is_array($config)) {
-            
-            # Setting Configurations
-            static::$config = $config + static::$config;
-            $pathWithoutTrailingSlash = rtrim(static::$config['directory'], '/');
-            static::$config['directory'] = $pathWithoutTrailingSlash.'/';
-
-        } elseif(is_string($config)) {
-
-            # Getting Single Config item
-            return isset(static::$config[$config]) ? static::$config[$config] : null;
-
-        } elseif(!$config) {
-
-            # Getting All configurations
-            return static::$config;
-        } else {
-            throw new CacheException('Invalid parameter provided for Cache::config()');
-        }
-    }
-
-    /**
      * Clear all the cache data stored in the cache directory
      * @return void
      */
     public static function clearAll()
     {
-        $dir = static::config('directory');
+        $dir = new \DirectoryIterator(static::config('directory'));
 
-        $handle = opendir($dir);
-        while ($file = readdir($handle)) {
-            if (!is_dir($file)) {
-                @unlink($dir.$file);
+        foreach ($dir as $fileinfo) {
+
+            if ($fileinfo->isFile()) {
+                $cacheKey = $fileinfo->getFilename();
+                static::clear($cacheKey);
             }
         }
-        closedir($handle);
     }
 
     /**
@@ -232,15 +202,14 @@ class Cache
     public static function countAll()
     {
         $count = 0;
-        $dir = static::config('directory');
 
-        $handle = opendir($dir);
-        while ($file = readdir($handle)) {
-            if (!is_dir($file)) {
+        $dir = new \DirectoryIterator(static::config('directory'));
+
+        foreach ($dir as $fileinfo) {
+            if ($fileinfo->isFile()) {
                 $count++;
             }
         }
-        closedir($handle);
 
         return $count;
     }
@@ -250,12 +219,12 @@ class Cache
      * @return void
      */
     public function purge() {
-        static::clear($this->key);
+        static::clear($this->key()) ;
     }
 
     /**
      * Clear/Delete a specified data by its key
-     * @param type $key 
+     * @param string $key 
      * @return void
      */
     public static function clear($key)
@@ -263,7 +232,12 @@ class Cache
         $that = new static($key);
 
         if ($that->isCached()) {
-            @unlink($that->file);
+
+            $deletionSuccess = unlink($that->filePath());
+            
+            if(!$deletionSuccess) {
+                throw new CacheException(sprintf("Could not delete file '%s'", $this->filePath()));
+            }
         }
     }
 }

@@ -8,7 +8,7 @@ class CacheTest extends TestCase
     {
         $config = array(
             'directory'    => __DIR__.'/../TestData/cache',
-        );
+            );
         Cache::config($config);
     }
 
@@ -49,7 +49,8 @@ class CacheTest extends TestCase
 
         $this->assertFileNotExists($myCache->filePath());
 
-        $myCache->putInCache('this is just a test data');
+        $writtenSuccessfully =  $myCache->putInCache('this is just a test data');
+        $this->assertTrue($writtenSuccessfully);
 
         $this->assertFileExists($myCache->filePath());
 
@@ -81,9 +82,10 @@ class CacheTest extends TestCase
         $dataToBeCached = array(
             'foo'    => 'Bar',
             'hello'    => 'World',
-        );
+            );
 
-        $myCache->putInCache($dataToBeCached);
+        $writtenSuccessfully = $myCache->putInCache($dataToBeCached);
+        $this->assertTrue($writtenSuccessfully);
 
         // retrieving
         $myCacheRetrival = new Cache($key);
@@ -102,7 +104,8 @@ class CacheTest extends TestCase
 
         $myCache = new Cache($key);
 
-        $myCache->putInCache('Foo Bar');
+        $writtenSuccessfully = $myCache->putInCache('Foo Bar');
+        $this->assertTrue($writtenSuccessfully);
 
         $this->assertFileExists($myCache->filePath());
 
@@ -114,13 +117,16 @@ class CacheTest extends TestCase
     public function testClearingAllCachedData() {
 
         $foo1 = new Cache('foo1');
-        $foo1->putInCache('Foo BAr 1');
+        $writtenSuccessfully = $foo1->putInCache('Foo BAr 1');
+        $this->assertTrue($writtenSuccessfully);
 
         $foo2 = new Cache('foo2');
-        $foo2->putInCache('Foo BAr 2');
+        $writtenSuccessfully = $foo2->putInCache('Foo BAr 2');
+        $this->assertTrue($writtenSuccessfully);
 
         $foo3 = new Cache('foo3');
-        $foo3->putInCache('Foo BAr 3');
+        $writtenSuccessfully = $foo3->putInCache('Foo BAr 3');
+        $this->assertTrue($writtenSuccessfully);
 
         Cache::clearAll();
 
@@ -137,10 +143,12 @@ class CacheTest extends TestCase
         $this->assertEquals(0, Cache::countAll());
 
         $foo1 = new Cache('foo1');
-        $foo1->putInCache('Foo BAr 1');
+        $writtenSuccessfully = $foo1->putInCache('Foo BAr 1');
+        $this->assertTrue($writtenSuccessfully);
 
         $foo2 = new Cache('foo2');
-        $foo2->putInCache('Foo BAr 2');
+        $writtenSuccessfully = $foo2->putInCache('Foo BAr 2');
+        $this->assertTrue($writtenSuccessfully);
 
         $this->assertEquals(2, Cache::countAll());
 
@@ -153,7 +161,7 @@ class CacheTest extends TestCase
 
         $ourConfig  = array(
             'cacheExpiry'   => 44556,
-            'directory'     => 'foo-cache/'
+            'serialize'     => true
         );
 
         // Setting configurations
@@ -164,11 +172,11 @@ class CacheTest extends TestCase
         $this->assertTrue(is_array($allConfigs));
 
         $this->assertEquals($ourConfig['cacheExpiry'], $allConfigs['cacheExpiry']);
-        $this->assertEquals($ourConfig['directory'], $allConfigs['directory']);
+        $this->assertEquals($ourConfig['serialize'], $allConfigs['serialize']);
 
         // retrieving individual config items
         $this->assertEquals($ourConfig['cacheExpiry'], Cache::config('cacheExpiry'));
-        $this->assertEquals($ourConfig['directory'], Cache::config('directory'));
+        $this->assertEquals($ourConfig['serialize'], Cache::config('serialize'));
     }
 
     public function testConfigThrowsExceptionForInvalidInput() {
@@ -176,4 +184,82 @@ class CacheTest extends TestCase
         $this->setExpectedException('Gckabir\AwesomeCache\CacheException');
         Cache::config(56.2);
     }
+
+    public function testKeyWorksProperly() {
+
+        $myKey = 'hellodata';
+        $myCache =  new Cache($myKey);
+
+        $this->assertEquals($myKey, $myCache->key());
+    }
+
+    public function testIsUsableWorksCorrectly() {
+
+        $myCache = new Cache('foodata123');
+        $writtenSuccessfully = $myCache->putInCache('This is a test data');
+        $this->assertTrue($writtenSuccessfully);
+
+        $this->assertTrue( $myCache->isUsable() );
+
+        Cache::clear($myCache->key()); // Same as doing $myCache->prune();
+
+        $this->assertFalse($myCache->isCached());
+    }
+
+    public function testIsCachedAndUsable() {
+
+        $myCache = new Cache('foodata124');
+
+        $writtenSuccessfully = $myCache->putInCache('test data');
+        $this->assertTrue($writtenSuccessfully);
+
+        $this->assertTrue( $myCache->isCached() );
+        $this->assertTrue( $myCache->isUsable() );
+        $this->assertTrue( $myCache->isCachedAndUsable() );
+
+        Cache::clear($myCache->key()); // Same as doing $myCache->prune();
+
+        $this->assertFalse($myCache->isCached());
+    }
+
+    public function testPuttingNonScalarDataWhenSerializationIsDisabled() {
+        Cache::config(array(
+            'serialize' => false
+            ));
+
+        $myCache = new Cache('foodata1245');
+
+        // scalar data
+        $scalarData = 'Hello World';
+        $writtenSuccessfully = $myCache->putInCache($scalarData);
+        
+        $this->assertEquals($scalarData, $myCache->cachedData());
+        $this->assertTrue($writtenSuccessfully);
+        $myCache->purge();
+        $this->assertFileNotExists($myCache->filePath());
+
+        // non-scalar data
+        $nonScalarData = array('foo'    => 'bar');
+
+        $this->setExpectedException('Gckabir\AwesomeCache\CacheException');
+
+        $writtenSuccessfully = $myCache->putInCache($nonScalarData);
+
+        $this->assertFalse($writtenSuccessfully);
+
+    }
+
+    public function testDurationWorksCorrectly() {
+
+        $myCache = new Cache('foodata123456');
+        $writtenSuccessfully = $myCache->putInCache('test data');
+        $this->assertTrue($writtenSuccessfully);
+
+        sleep(1);
+
+        $this->assertTrue( $myCache->duration() > 0 );
+
+        $myCache->purge();
+    }
+
 }

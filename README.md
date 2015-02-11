@@ -1,5 +1,7 @@
 # AwesomeCache
 [![Code Climate](https://codeclimate.com/github/kabir-baidhya/AwesomeCache/badges/gpa.svg)](https://codeclimate.com/github/kabir-baidhya/AwesomeCache)
-[![SensioLabsInsight](https://insight.sensiolabs.com/projects/4499453d-f2b8-455e-9d32-4caedf38f2ba/mini.png)](https://insight.sensiolabs.com/projects/4499453d-f2b8-455e-9d32-4caedf38f2ba)
+[![Build Status](https://travis-ci.org/kabir-baidhya/AwesomeCache.svg?branch=master)](https://travis-ci.org/kabir-baidhya/AwesomeCache)
+[![Code Coverage](https://scrutinizer-ci.com/g/kabir-baidhya/AwesomeCache/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/kabir-baidhya/AwesomeCache/?branch=master)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/kabir-baidhya/AwesomeCache/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/kabir-baidhya/AwesomeCache/?branch=master)
 
 A very simple &amp; lightweight API for File-based Caching for PHP 5.3+
