@@ -4,8 +4,11 @@ namespace Gckabir\AwesomeCache;
 
 class CacheTest extends TestCase
 {
-    public function __construct()
+    public static function setUpBeforeClass()
     {
+        echo "\n";
+        echo "Setting Up\n";
+
         $config = array(
             'directory'    => __DIR__.'/../TestData/cache',
             );
@@ -162,7 +165,7 @@ class CacheTest extends TestCase
         $ourConfig  = array(
             'cacheExpiry'   => 44556,
             'serialize'     => true
-        );
+            );
 
         // Setting configurations
         Cache::config($ourConfig);
@@ -260,6 +263,14 @@ class CacheTest extends TestCase
         $this->assertTrue( $myCache->duration() > 0 );
 
         $myCache->purge();
+    }
+
+    public static function tearDownAfterClass()
+    {
+        echo "\n";
+        echo "Tearing Down\n";
+        Cache::clearAll();
+        rmdir(Cache::config('directory'));
     }
 
 }
